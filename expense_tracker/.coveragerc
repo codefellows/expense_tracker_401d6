@@ -1,3 +1,13 @@
 [run]
 source = expense_tracker
-omit = expense_tracker/test*
+omit = 
+    expense_tracker/test*
+    expense_tracker/models/*
+    expense_tracker/scripts/*
+    expense_tracker/views/notfound.py
+    expense_tracker/views/__init__.py
+    expense_tracker/routes.py
+    expense_tracker/__init__.py
+
+[report]
+show_missing = True

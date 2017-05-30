@@ -13,6 +13,8 @@ requires = [
     'pyramid_jinja2',
     'pyramid_debugtoolbar',
     'pyramid_tm',
+    'ipython',
+    'pyramid_ipython',
     'SQLAlchemy',
     'transaction',
     'zope.sqlalchemy',
@@ -23,6 +25,7 @@ tests_require = [
     'WebTest >= 1.3.1',  # py3 compat
     'pytest',
     'pytest-cov',
+    'tox',
 ]
 
 setup(
@@ -36,7 +39,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
     ],
-    author='',
+    author='sea-python-401d6',
     author_email='',
     url='',
     keywords='web pyramid pylons',
