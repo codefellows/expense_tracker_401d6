@@ -1,0 +1,9 @@
+{% extends "layout.jinja2" %}
+{% block content %}
+<h1>List of Expenses</h1>
+<ul>
+    {% for item in expenses %}
+    <li>Expense {{ item.id }}: {{ item.title }} ${{ item.price }} <a href="{{ request.route_url('detail', id=item.id) }}"><button>See This Expense</button></a></li>
+    {% endfor %}
+</ul>
+{% endblock %}

@@ -1,28 +1,71 @@
 from pyramid import testing
-from pyramid.response import Response
+from pyramid.httpexceptions import HTTPNotFound
+from expense_tracker.views.default import EXPENSES
 import pytest
 
 
 @pytest.fixture
 def home_response():
     """Return a response from the home page."""
-    from expense_tracker.views.default import home_page
+    from expense_tracker.views.default import home_view
     request = testing.DummyRequest()
-    response = home_page(request)
+    response = home_view(request)
     return response
-
-
-def test_home_view_returns_response_given_request(home_response):
-    """Home view returns a Response object when given a request."""
-    assert isinstance(home_response, Response)
-
-
-def test_home_view_is_good(home_response):
-    """Home view response comes with a status 200 OK."""
-    assert home_response.status_code == 200
 
 
 def test_home_view_returns_proper_content(home_response):
     """Home view response includes the content we added."""
-    expected_text = '<h1 style="color: blue;">Hey, this is HTML in some external file.</h1>'
-    assert expected_text in home_response.text
+    assert "page" in home_response
+    assert "expenses" in home_response
+    assert home_response["expenses"] == EXPENSES
+
+
+def test_detail_view_with_id_returns_one_expense():
+    """."""
+    from expense_tracker.views.default import detail_view
+    req = testing.DummyRequest()
+    req.matchdict['id'] = '1'
+    response = detail_view(req)
+    assert response['expense'] == EXPENSES[1]
+
+
+def test_detail_view_with_bad_id_raises_exception():
+    """."""
+    from expense_tracker.views.default import detail_view
+    req = testing.DummyRequest()
+    req.matchdict['id'] = '100'
+    with pytest.raises(HTTPNotFound):
+        detail_view(req)
+
+
+# ======== FUNCTIONAL TESTS START HERE =========
+
+
+@pytest.fixture
+def testapp():
+    """Create a test application to use for functional tests."""
+    from expense_tracker import main
+    from webtest import TestApp
+    app = main({})
+    return TestApp(app)
+
+
+def test_home_route_returns_home_content(testapp):
+    """."""
+    response = testapp.get('/')
+    html = response.html
+    assert 'List of Expenses' in str(html.find('h1').text)
+    assert 'Expense Tracker | Home' in str(html.find('title').text)
+
+
+def test_home_route_listing_has_all_expenses(testapp):
+    """."""
+    response = testapp.get('/')
+    html = response.html
+    assert len(EXPENSES) == len(html.find_all('li'))
+
+
+def test_detail_route_with_bad_id(testapp):
+    """."""
+    response = testapp.get('/expense/400', status=404)
+    assert "OOOOOOOOH MY GOOOOOOOOOOD!!!!" in response.text
