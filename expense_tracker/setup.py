@@ -19,6 +19,7 @@ requires = [
     'transaction',
     'zope.sqlalchemy',
     'waitress',
+    'psycopg2'
 ]
 
 tests_require = [
@@ -55,7 +56,7 @@ setup(
             'main = expense_tracker:main',
         ],
         'console_scripts': [
-            'initialize_expense_tracker_db = expense_tracker.scripts.initializedb:main',
+            'initializedb = expense_tracker.scripts.initializedb:main',
         ],
     },
 )
