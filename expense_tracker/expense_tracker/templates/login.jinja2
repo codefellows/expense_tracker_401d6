@@ -1,0 +1,21 @@
+{% extends "layout.jinja2" %}
+{% block content %}
+
+{{ error }}
+
+<form method="POST">
+    <ul>
+        <li>
+            <label for="username">Username: </label>
+            <input type="text" name="username" required />
+        </li>
+        <li>
+            <label for="password">Password: </label>
+            <input type="password" name="password" pattern="[\w]+" required />
+        </li>
+        <li>
+            <input type="submit" value="Log In"/>
+        </li>
+    </ul>
+</form>
+{% endblock %}

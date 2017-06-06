@@ -4,7 +4,9 @@ from pyramid.httpexceptions import (
     HTTPNotFound,
     HTTPFound
 )
+from pyramid.security import remember, forget
 from expense_tracker.models import Expense
+from expense_tracker.security import check_credentials
 import datetime
 
 
@@ -34,7 +36,11 @@ def detail_view(request):
     }
 
 
-@view_config(route_name="create", renderer="../templates/new-expense.jinja2")
+@view_config(
+    route_name="create",
+    renderer="../templates/new-expense.jinja2",
+    permission="secret"
+)
 def create_view(request):
     """View for adding a new expense to the database."""
     if request.method == "POST" and request.POST:
@@ -58,7 +64,11 @@ def create_view(request):
     return {}
 
 
-@view_config(route_name="update", renderer="../templates/edit-expense.jinja2")
+@view_config(
+    route_name="update",
+    renderer="../templates/edit-expense.jinja2",
+    permission="secret"
+)
 def update_view(request):
     # if given a bad id, raise a not found exception
     the_id = int(request.matchdict['id'])
@@ -81,3 +91,26 @@ def update_view(request):
         expense.description = request.POST['description']
         request.dbsession.flush()
         return HTTPFound(request.route_url('detail', id=expense.id))
+
+
+@view_config(route_name='login', renderer='../templates/login.jinja2')
+def login(request):
+    """View for logging in a user."""
+    if request.method == "GET":
+        return {}
+    if request.method == "POST":
+        username = request.POST['username']
+        password = request.POST['password']
+        if check_credentials(username, password):
+            headers = remember(request, username)
+            return HTTPFound(
+                location=request.route_url('home'),
+                headers=headers
+            )
+        return {'error': 'Bad username or password'}
+
+
+@view_config(route_name='logout')
+def logout(request):
+    headers = forget(request)
+    return HTTPFound(request.route_url('home'), headers=headers)
