@@ -2,6 +2,7 @@
 {% block content %}
 <h1>Edit an Expense</h1>
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ request.session.get_csrf_token() }}" />
     <ul>
         <li>
             <label for="title">Title: </label>

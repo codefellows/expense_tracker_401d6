@@ -93,7 +93,7 @@ def update_view(request):
         return HTTPFound(request.route_url('detail', id=expense.id))
 
 
-@view_config(route_name='login', renderer='../templates/login.jinja2')
+@view_config(route_name='login', renderer='../templates/login.jinja2', require_csrf=False)
 def login(request):
     """View for logging in a user."""
     if request.method == "GET":
@@ -114,3 +114,8 @@ def login(request):
 def logout(request):
     headers = forget(request)
     return HTTPFound(request.route_url('home'), headers=headers)
+
+
+@view_config(route_name='test', renderer='json')
+def test_view(request):
+    return {"foo": "bar"}
