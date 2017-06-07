@@ -1,0 +1,15 @@
+    <form method="POST" action='https://learning-journal-jjfeore.herokuapp.com/journal/new-entry'>
+        <div class="row" id="detail-entry">
+            <div class="form-group">
+                <label class="input-header" for="title">Title</label>
+                <input type="text" id="input-title" name="title" value="{{ title }}" required/>
+            </div>
+            <div class="form-group">
+                <label class="input-header" for="text">Entry</label>
+                <textarea name="text" id="input-text" required>{{ text }}</textarea>
+            </div>
+            <div class="form-group">
+                <input type="submit" class="btn btn-default" value="Add a New Entry" />
+            </div>
+        </div>
+    </form>
