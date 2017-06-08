@@ -1,0 +1,17 @@
+Asynchronous
+Javascript
+and
+DATA EXCHANGE
+
+$.get('http://www.google.com', function(response){
+    console.log(response);
+})
+
+$.get('/', function(response){
+    console.log(response);
+})
+
+$.post('/login', {
+    'username': 'sea_python_401d6',
+    'password': 'hotpotato'
+})
