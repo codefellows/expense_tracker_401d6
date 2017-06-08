@@ -42,7 +42,6 @@ def includeme(config):
     authz_policy = ACLAuthorizationPolicy()
     config.set_authorization_policy(authz_policy)
     config.set_root_factory(MyRoot)
-
     session_secret = os.environ.get('SESSION_SECRET')
     session_factory = SignedCookieSessionFactory(session_secret)
     config.set_session_factory(session_factory)

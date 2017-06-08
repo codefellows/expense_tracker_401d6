@@ -114,8 +114,3 @@ def login(request):
 def logout(request):
     headers = forget(request)
     return HTTPFound(request.route_url('home'), headers=headers)
-
-
-@view_config(route_name='test', renderer='json')
-def test_view(request):
-    return {"foo": "bar"}

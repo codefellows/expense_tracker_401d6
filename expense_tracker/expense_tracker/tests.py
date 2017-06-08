@@ -69,6 +69,13 @@ def post_request(dummy_request):
     return dummy_request
 
 
+@pytest.fixture
+def set_credentials():
+    from expense_tracker.security import context
+    import os
+    os.environ['AUTH_PASSWORD'] = context.hash('flamingo')
+
+
 def test_create_view_post_empty_data_returns_empty_dict(post_request):
     from expense_tracker.views.default import create_view
     response = create_view(post_request)
@@ -114,6 +121,56 @@ def test_create_view_post_with_data_redirects(post_request):
     assert isinstance(response, HTTPFound)
 
 
+def test_login_bad_credentials_fails(post_request):
+    from expense_tracker.views.default import login
+    data = {
+        'username': 'sea_python_401d6',
+        'password': 'not_potato'
+    }
+    post_request.POST = data
+    response = login(post_request)
+    assert response == {'error': 'Bad username or password'}
+
+
+def test_login_empty_credentials_fails(post_request):
+    from expense_tracker.views.default import login
+    data = {
+        'username': '',
+        'password': ''
+    }
+    post_request.POST = data
+    response = login(post_request)
+    assert response == {'error': 'Bad username or password'}
+
+
+def test_get_login_returns_dict(dummy_request):
+    from expense_tracker.views.default import login
+    dummy_request.method = "GET"
+    response = login(dummy_request)
+    assert response == {}
+
+
+def test_login_successful_with_good_creds(post_request, set_credentials):
+    from expense_tracker.views.default import login
+    from pyramid.httpexceptions import HTTPFound
+    data = {
+        'username': 'sea_python_401d6',
+        'password': 'flamingo'
+    }
+    post_request.POST = data
+    response = login(post_request)
+    assert isinstance(response, HTTPFound)
+
+
+def test_logout_redirects(dummy_request):
+    from expense_tracker.views.default import logout
+    from pyramid.httpexceptions import HTTPFound
+    response = logout(dummy_request)
+    assert isinstance(response, HTTPFound)
+
+
+# ========== INTEGRATION TESTS AFTER THIS POINT =========
+
 @pytest.fixture(scope="session")
 def testapp(request):
     from webtest import TestApp
@@ -125,8 +182,9 @@ def testapp(request):
         settings['sqlalchemy.url'] = "postgres:///test_expenses"
         config = Configurator(settings=settings)
         config.include('pyramid_jinja2')
-        config.include('.models')
-        config.include('.routes')
+        config.include('expense_tracker.models')
+        config.include('expense_tracker.routes')
+        config.include('expense_tracker.security')
         config.scan()
         return config.make_wsgi_app()
 
@@ -145,23 +203,94 @@ def testapp(request):
     return testapp
 
 
-def test_new_expense_redirects_to_home(testapp):
+def test_unauthenticated_user_is_forbidden_from_create_route(testapp):
+    response = testapp.get('/expense/new-expense', status=403)
+    assert response.status_code == 403
+
+
+def test_unauthenticated_user_is_forbidden_from_update_route(testapp):
+    response = testapp.get('/expense/1/edit', status=403)
+    assert response.status_code == 403
+
+
+def test_can_get_login_route(testapp):
+    response = testapp.get('/login')
+    assert response.status_code == 200
+
+
+def test_get_login_route_has_form_and_fields(testapp):
+    response = testapp.get('/login')
+    html = response.html
+    assert html.find('form').attrs['method'] == 'POST'
+    assert html.find('input', type='submit').attrs['value'] == 'Log In'
+    assert html.find('input', {'name': 'username'})
+    assert html.find('input', {'name': 'password'})
+
+
+def test_post_login_route_with_bad_creds(testapp):
+    response = testapp.post('/login', {
+        'username': 'sea_python_401d6',
+        'password': 'fhwqwgads'
+    })
+    assert response.status_code == 200
+    html = response.html
+    assert html.find('form').attrs['method'] == 'POST'
+    assert html.find('input', type='submit').attrs['value'] == 'Log In'
+    assert html.find('input', {'name': 'username'})
+    assert html.find('input', {'name': 'password'})
+    # assert response.location == SITE_ROOT + '/login'
+
+
+def test_post_login_route_with_good_creds(testapp):
+    response = testapp.post('/login', {
+        'username': 'sea_python_401d6',
+        'password': 'flamingo'
+    })
+    assert 'auth_tkt' in response.headers['Set-Cookie']
+    assert response.status_code == 302
+    assert response.location == SITE_ROOT + '/'
+
+
+def test_new_expense_no_token_fails(testapp):
     """When redirection is followed, result is home page."""
     data = {
         'title': 'flerg the blerg',
         'price': '5000',
         'description': ''
     }
+    response = testapp.post('/expense/new-expense', data, status=400)
+    assert response.status_code == 400
+
+
+def test_new_expense_redirects_to_home(testapp):
+    """When redirection is followed, result is home page."""
+    response1 = testapp.get('/expense/new-expense')
+    token = response1.html.find('input', type='hidden').attrs['value']
+    data = {
+        'title': 'flerg the blerg',
+        'price': '5000',
+        'description': '',
+        'csrf_token': token
+    }
     response = testapp.post('/expense/new-expense', data)
     assert response.location == SITE_ROOT + "/"
 
 
+def test_edit_non_existent_expense_raises_404(testapp):
+    response = testapp.get('/expense/100/edit', status=404)
+    assert "<h1>OOOOOOOOH MY GOOOOOOOOOOD!!!!</h1>" in response.text
+
+
 def test_new_expense_redirects_to_home_and_shows_html(testapp):
     """When redirection is followed, result is home page."""
+    response1 = testapp.get('/expense/new-expense')
+    token = response1.html.find('input', type='hidden').attrs['value']
+
     data = {
         'title': 'flerg the blerg',
         'price': '5000',
-        'description': ''
+        'description': '',
+        'csrf_token': token
     }
     response = testapp.post('/expense/new-expense', data).follow()
     assert "<h1>List of Expenses</h1>" in response.text
