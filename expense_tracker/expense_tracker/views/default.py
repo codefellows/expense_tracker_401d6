@@ -114,3 +114,27 @@ def login(request):
 def logout(request):
     headers = forget(request)
     return HTTPFound(request.route_url('home'), headers=headers)
+
+
+@view_config(
+    route_name='api_expense_list',
+    renderer='json'
+)
+def api_list(request):
+    query = request.dbsession.query(Expense).all()
+    expenses = [expense.to_json() for expense in query]
+    return expenses
+
+
+@view_config(
+    route_name='api_expense_detail',
+    renderer='json'
+)
+def api_detail(request):
+    the_id = int(request.matchdict['id'])
+    session = request.dbsession
+    expense = session.query(Expense).get(the_id)
+    if not expense:
+        raise HTTPNotFound
+
+    return expense.to_json()

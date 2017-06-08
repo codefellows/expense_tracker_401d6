@@ -15,3 +15,12 @@ class Expense(Base):
     price = Column(Integer)
     paid_date = Column(DateTime)
     description = Column(Unicode)
+
+    def to_json(self):
+        output = {}
+        output['id'] = self.id
+        output['title'] = self.title
+        output['price'] = self.price
+        output['paid_date'] = self.paid_date.strftime('%B %d, %Y')
+        output['description'] = self.description
+        return output

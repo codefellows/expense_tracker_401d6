@@ -7,3 +7,6 @@ def includeme(config):
     config.add_route('login', '/login')
     config.add_route('logout', '/logout')
     config.add_route('test', '/test')
+
+    config.add_route('api_expense_list', '/api/v1/expenses')
+    config.add_route('api_expense_detail', '/api/v1/expenses/{id:\d+}')
